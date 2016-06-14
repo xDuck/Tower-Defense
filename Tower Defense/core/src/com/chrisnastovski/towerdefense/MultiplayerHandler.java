@@ -5,7 +5,6 @@ import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import com.sun.org.apache.xpath.internal.operations.Mult;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -218,7 +217,7 @@ public class MultiplayerHandler {
             if(msg.equals("ping")) {
                 MultiplayerUtils.serverInfo info = new MultiplayerUtils.serverInfo();
                 info.name = serverInfo.name;
-                info.clientNames = getClientNames(clients);
+                info.clientNames = getClientNames();
                 info.hasPassword = serverInfo.hasPassword;
             }
         }
@@ -227,15 +226,17 @@ public class MultiplayerHandler {
         if(object instanceof MultiplayerUtils.clientHandshake) {
             MultiplayerUtils.clientHandshake info = (MultiplayerUtils.clientHandshake) object;
             // save the connection
-            connections.add(connection);
+            MultiplayerUtils.clientInfo newClient = new MultiplayerUtils.clientInfo();
+            newClient.name = info.name;
+            newClient.connection = connection;
+            clients.add(newClient);
 
             // Broadcast message
             // TODO: create method for this
             MultiplayerUtils.stringMessage newUser = new MultiplayerUtils.stringMessage();
             newUser.message = "New user connected! [" + info.name + "]";
 
-            for(Connection c : connections)
-                c.sendTCP(newUser);
+            broadcast(newUser);
 
             System.out.println("[SERVER] User connected: " + info.name);
         }
@@ -259,5 +260,20 @@ public class MultiplayerHandler {
             if (i.connection == c)
                 return i;
         return null;
+    }
+
+    public void broadcast(Object o) {
+        for(MultiplayerUtils.clientInfo c : clients) {
+            c.connection.sendTCP(o);
+        }
+    }
+
+    public String[] getClientNames() {
+        String[] names = new String[clients.size()];
+        for(int i = 0; i < names.length; i++) {
+            names[i] = clients.get(i).name;
+        }
+
+        return names;
     }
 }
