@@ -1,5 +1,11 @@
 package com.chrisnastovski.towerdefense;
 
+import com.chrisnastovski.towerdefense.MultiplayerObjects.Lobby;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.clientHandshake;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.clientInfo;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.serverHandshake;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.serverInfo;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.stringMessage;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
@@ -25,14 +31,14 @@ public class MultiplayerHandler {
     Server server;
 
     // Server variables
-    ArrayList<MultiplayerUtils.clientInfo> clients;
-    MultiplayerUtils.serverInfo serverInfo = new MultiplayerUtils.serverInfo();
+    ArrayList<clientInfo> clients;
+    serverInfo serverInfo = new serverInfo();
     String password;
 
-    MultiplayerUtils.Lobby lobby;
+    Lobby lobby;
 
     public MultiplayerHandler(){
-        clients = new ArrayList<MultiplayerUtils.clientInfo>();
+        clients = new ArrayList<clientInfo>();
     }
 
     // Wrapper for starting a non-passworded lobby
@@ -68,7 +74,7 @@ public class MultiplayerHandler {
 
         // Register all classes
         Kryo kryo = server.getKryo();
-        MultiplayerUtils.registerAllClasses(kryo);
+        MultiplayerObjects.registerAllClasses(kryo);
 
         // Add listener to server
         server.addListener(new Listener() {
@@ -82,10 +88,10 @@ public class MultiplayerHandler {
 
 
     // Find lobbies on the network
-    public ArrayList<MultiplayerUtils.serverInfo> findLobbies() {
+    public ArrayList<serverInfo> findLobbies() {
 
         // Keep track of servers that are found
-        final ArrayList<MultiplayerUtils.serverInfo> servers = new ArrayList<MultiplayerUtils.serverInfo>();
+        final ArrayList<serverInfo> servers = new ArrayList<serverInfo>();
 
         // Get list of ip's on the network that are open on the ports
         List<InetAddress> inets;
@@ -110,14 +116,14 @@ public class MultiplayerHandler {
 
             // Register all classes
             Kryo kryo = pingClient.getKryo();
-            MultiplayerUtils.registerAllClasses(kryo);
+            MultiplayerObjects.registerAllClasses(kryo);
 
             // Add listener
             pingClient.addListener(new Listener() {
                 public void received (Connection connection, Object object) {
                     // Server sending basic info. Not using method for security reasons
-                    if (object instanceof MultiplayerUtils.serverInfo) {
-                        MultiplayerUtils.serverInfo info = new MultiplayerUtils.serverInfo();
+                    if (object instanceof serverInfo) {
+                        serverInfo info = new serverInfo();
                         System.out.println("[CLIENT] Found server: " + info.name + "(" + info.clientNames.length + ")");
                         servers.add(info);
                     }
@@ -125,7 +131,7 @@ public class MultiplayerHandler {
             });
 
             // Send ping command
-            MultiplayerUtils.stringMessage cmd = new MultiplayerUtils.stringMessage();
+            stringMessage cmd = new stringMessage();
             cmd.message = "ping";
             pingClient.sendTCP(cmd);
 
@@ -135,14 +141,14 @@ public class MultiplayerHandler {
 
     // Wrapper for joining localhost lobby
     public boolean joinOwnLobby(String name) {
-        MultiplayerUtils.Lobby lobby = new MultiplayerUtils.Lobby();
+        Lobby lobby = new Lobby();
         lobby.ip = "localhost";
         return joinLobby(lobby, name);
     }
 
 
     // Join any lobby
-    public boolean joinLobby(MultiplayerUtils.Lobby lobby, String name) {
+    public boolean joinLobby(Lobby lobby, String name) {
 
         // Store the lobby we are connecting to
         this.lobby = lobby;
@@ -161,7 +167,7 @@ public class MultiplayerHandler {
 
         // Register classes for transfer
         Kryo kryo = client.getKryo();
-        MultiplayerUtils.registerAllClasses(kryo);
+        MultiplayerObjects.registerAllClasses(kryo);
 
         // Add listener
         client.addListener(new Listener() {
@@ -171,7 +177,7 @@ public class MultiplayerHandler {
         });
 
         // Send server client's info (response handled in listeners)
-        MultiplayerUtils.clientHandshake info = new MultiplayerUtils.clientHandshake();
+        clientHandshake info = new clientHandshake();
         info.name = name;
         client.sendTCP(info);
         return true;
@@ -179,8 +185,8 @@ public class MultiplayerHandler {
 
     // Non specific handlers
     private void generalHandleReceivedData(Connection connection, Object object) {
-        if(object instanceof MultiplayerUtils.stringMessage) {
-            MultiplayerUtils.stringMessage msg = (MultiplayerUtils.stringMessage) object;
+        if(object instanceof stringMessage) {
+            stringMessage msg = (stringMessage) object;
             String name = findByConnection(connection).name;
             System.out.println("[CLIENT : "+name+"] Message received: " + msg.message);
         }
@@ -192,8 +198,8 @@ public class MultiplayerHandler {
         generalHandleReceivedData(connection, object);
 
         // Server is sending us initial connection data
-        if(object instanceof MultiplayerUtils.serverHandshake) {
-            MultiplayerUtils.serverHandshake info = (MultiplayerUtils.serverHandshake) object;
+        if(object instanceof serverHandshake) {
+            serverHandshake info = (serverHandshake) object;
 
             // If we were rejected, call the disconnect event
             if(!info.accepted) {
@@ -210,12 +216,12 @@ public class MultiplayerHandler {
     private void serverHandleReceivedData(Connection connection, Object object) {
         generalHandleReceivedData(connection, object);
 
-        if( object instanceof  MultiplayerUtils.stringMessage) {
-            String msg = ((MultiplayerUtils.stringMessage) object).message;
+        if( object instanceof  stringMessage) {
+            String msg = ((stringMessage) object).message;
 
             // Build and send server info
             if(msg.equals("ping")) {
-                MultiplayerUtils.serverInfo info = new MultiplayerUtils.serverInfo();
+                serverInfo info = new serverInfo();
                 info.name = serverInfo.name;
                 info.clientNames = getClientNames();
                 info.hasPassword = serverInfo.hasPassword;
@@ -223,17 +229,17 @@ public class MultiplayerHandler {
         }
 
         // Client trying to connect
-        if(object instanceof MultiplayerUtils.clientHandshake) {
-            MultiplayerUtils.clientHandshake info = (MultiplayerUtils.clientHandshake) object;
+        if(object instanceof clientHandshake) {
+            clientHandshake info = (clientHandshake) object;
             // save the connection
-            MultiplayerUtils.clientInfo newClient = new MultiplayerUtils.clientInfo();
+            clientInfo newClient = new clientInfo();
             newClient.name = info.name;
             newClient.connection = connection;
             clients.add(newClient);
 
             // Broadcast message
             // TODO: create method for this
-            MultiplayerUtils.stringMessage newUser = new MultiplayerUtils.stringMessage();
+            stringMessage newUser = new stringMessage();
             newUser.message = "New user connected! [" + info.name + "]";
 
             broadcast(newUser);
@@ -255,15 +261,15 @@ public class MultiplayerHandler {
         client.sendTCP(o);
     }
 
-    public MultiplayerUtils.clientInfo findByConnection(Connection c) {
-        for(MultiplayerUtils.clientInfo i : clients)
+    public clientInfo findByConnection(Connection c) {
+        for(clientInfo i : clients)
             if (i.connection == c)
                 return i;
         return null;
     }
 
     public void broadcast(Object o) {
-        for(MultiplayerUtils.clientInfo c : clients) {
+        for(clientInfo c : clients) {
             c.connection.sendTCP(o);
         }
     }
