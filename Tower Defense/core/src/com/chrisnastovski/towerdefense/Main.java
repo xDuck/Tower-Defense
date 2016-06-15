@@ -5,31 +5,34 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.chrisnastovski.towerdefense.MultiplayerObjects.stringMessage;
 
 
 public class Main extends ApplicationAdapter {
 	SpriteBatch batch;
 	Texture img;
 
-	boolean isServer = true;
+	boolean isServer = false;
 	
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
 		img = new Texture("badlogic.jpg");
 
-		MultiplayerHandler mp = new MultiplayerHandler();
+		MultiplayerServer server = new MultiplayerServer();
+		MultiplayerClient client = new MultiplayerClient();
 
 		if(isServer)
-			mp.startLobby("Chris's Lobby");
+			server.startLobby("Chris's Lobby");
 
-		mp.findLobbies();
-        mp.joinOwnLobby("Chris");
+		client.findLobbies();
+        client.joinOwnLobby("Chris");
 
 		// Send message
-        MultiplayerUtils.stringMessage msg = new MultiplayerUtils.stringMessage();
+        stringMessage msg = new stringMessage();
         msg.message = "Hey!";
-        mp.sendData(msg);
+		msg.name = "Chris";
+        client.sendData(msg);
 
 	}
 
