@@ -131,6 +131,10 @@ public class MultiplayerClient {
 
     // Client specific handlers
     private void clientHandleReceivedData(Connection connection, Object object) {
+
+        if(object instanceof PathFollower) {
+            MainMenu.followers.add((PathFollower) object);
+        }
         if(object instanceof stringMessage) {
             stringMessage msg = (stringMessage) object;
             System.out.println("[CLIENT] Message received from "+msg.name+": " + msg.message);

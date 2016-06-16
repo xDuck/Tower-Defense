@@ -43,6 +43,9 @@ public class MultiplayerServer {
         // Set server vars
         serverInfo.name = name;
         serverInfo.clientNames = new String[0];
+        serverInfo.isFull = false;
+        serverInfo.maxClients = 2;
+
         if (password != null) {
             serverInfo.hasPassword = false;
             this.password = null;
@@ -80,6 +83,10 @@ public class MultiplayerServer {
     // Server specific handlers
     private void serverHandleReceivedData(Connection connection, Object object) {
 
+        if(object instanceof PathFollower) {
+            broadcast(object);
+        }
+
         if( object instanceof  stringMessage) {
             stringMessage msg = ((stringMessage) object);
 
@@ -98,6 +105,13 @@ public class MultiplayerServer {
         // Client trying to connect
         if(object instanceof clientHandshake) {
             clientHandshake info = (clientHandshake) object;
+
+            // Server Full
+            if(serverInfo.clientNames.length + 1 >= serverInfo.maxClients) {
+                connection.close();
+                return;
+            }
+
             // save the connection
             clientInfo newClient = new clientInfo();
             newClient.name = info.name;

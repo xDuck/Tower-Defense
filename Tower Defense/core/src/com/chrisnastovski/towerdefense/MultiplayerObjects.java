@@ -1,5 +1,6 @@
 package com.chrisnastovski.towerdefense;
 
+import com.badlogic.gdx.math.Vector2;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 
@@ -11,7 +12,10 @@ public class MultiplayerObjects {
     // Register classes to Kryonet
     public static void registerAllClasses(Kryo k) {
         // Java classes
+        k.register(String.class);
         k.register(String[].class);
+        k.register(Vector2.class);
+        k.register(Vector2[].class);
 
         // Custom classes
         k.register(parentObject.class);
@@ -20,6 +24,8 @@ public class MultiplayerObjects {
         k.register(serverHandshake.class);
         k.register(serverInfo.class);
         k.register(Lobby.class);
+
+        k.register(PathFollower.class);
     }
 
     public static class parentObject {
@@ -51,6 +57,8 @@ public class MultiplayerObjects {
     public static class serverInfo extends parentObject {
         public String[] clientNames;
         public boolean hasPassword;
+        public boolean isFull;
+        public int maxClients;
     }
 
     // Holds information about the lobby
