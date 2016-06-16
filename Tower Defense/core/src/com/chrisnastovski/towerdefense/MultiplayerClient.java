@@ -27,10 +27,12 @@ public class MultiplayerClient {
     Client client;
     Lobby lobby;
 
-    // COMMIT PLS
+    Connection serverConn;
 
     public MultiplayerClient() {
-
+        // Create client
+        client = new Client();
+        client.start();
     }
 
     // Find lobbies on the network
@@ -99,9 +101,6 @@ public class MultiplayerClient {
         // Store the lobby we are connecting to
         this.lobby = lobby;
 
-        // Create client
-        client = new Client();
-        client.start();
         try {
             client.connect(5000, lobby.ip,  UDP_PORT, TCP_PORT);
         } catch (IOException e) {
@@ -126,6 +125,7 @@ public class MultiplayerClient {
         clientHandshake info = new clientHandshake();
         info.name = name;
         client.sendTCP(info);
+
         return true;
     }
 
@@ -146,6 +146,7 @@ public class MultiplayerClient {
                 return;
             }
 
+            serverConn = connection;
             // Let user know who's here
             System.out.println("[CLIENT] Server Handshake: " + info.connections + " Connections. Users: " + Arrays.toString(info.Names));
         }
@@ -161,6 +162,8 @@ public class MultiplayerClient {
     }
 
     public void sendData(Object o) {
+
+        System.out.println(client.isConnected());
         client.sendTCP(o);
     }
 

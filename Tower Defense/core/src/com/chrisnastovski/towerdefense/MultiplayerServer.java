@@ -81,7 +81,7 @@ public class MultiplayerServer {
     private void serverHandleReceivedData(Connection connection, Object object) {
 
         if( object instanceof  stringMessage) {
-            String msg = ((stringMessage) object).message;
+            stringMessage msg = ((stringMessage) object);
 
             // Build and send server info
             if(msg.equals("ping")) {

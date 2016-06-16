@@ -14,6 +14,7 @@ public class MultiplayerObjects {
         k.register(String[].class);
 
         // Custom classes
+        k.register(parentObject.class);
         k.register(stringMessage.class);
         k.register(clientHandshake.class);
         k.register(serverHandshake.class);
