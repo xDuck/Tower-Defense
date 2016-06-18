@@ -23,17 +23,18 @@ public class WorldTesting implements Screen {
 
     TextureAtlas bgAtlas;
     TextureAtlas objAtlas;
+    TextureAtlas vehicleAtlas;
 
     Terrain[][] terrain;
     String[] textureNames = { "grass10", "grass11", "grass12", "grass13", "grass14", "grass15", "grass16"};
     String borderTile = "grass05";
 
 
-    int hexWidth = 60, hexHeight = 60;
+    int hexWidth = HexMath.hexWidth, hexHeight = HexMath.hexHeight;
     int playWidth = 15, playHeight = 12;
     int borderWidth = 1, borderHeight = 1;
     int fullWidth = (playWidth+borderWidth*2)*hexWidth;
-    int fullHeight = (int) HexMath.hexToPixel(hexWidth, hexHeight, 0, playHeight + borderHeight*2).y + hexHeight/4;
+    int fullHeight = (int) HexMath.hexToPixel(0, playHeight + borderHeight*2).y + hexHeight/4;
 
     SpriteBatch batch;
     OrthographicCamera camera;
@@ -52,6 +53,7 @@ public class WorldTesting implements Screen {
 
         bgAtlas = new TextureAtlas("sprites/background-tiles.txt");
         objAtlas = new TextureAtlas("sprites/buildings.txt");
+        vehicleAtlas = new TextureAtlas("sprites/vehicles.txt");
 
         terrain = new Terrain[borderHeight*2 + playHeight][borderWidth*2 + playWidth];
 
@@ -67,7 +69,7 @@ public class WorldTesting implements Screen {
                     texture = borderTile;
 
                 Sprite s = bgAtlas.createSprite(texture);
-                Vector2 pt = HexMath.hexToPixel(hexWidth, hexHeight, j, i);
+                Vector2 pt = HexMath.hexToPixel(j, i);
                 System.out.println("Hex " + i + ", " + j + ": " + pt);
                 s.setBounds(pt.x, pt.y, hexWidth, hexHeight);
                 Terrain t = new Terrain(s);
@@ -92,7 +94,8 @@ public class WorldTesting implements Screen {
         clearLand(row, col);
         clearAround(row, col);
 
-        // Place Objects
+        // Place Vehicles
+
     }
 
     public void clearLand(int row, int col) {
@@ -179,7 +182,7 @@ public class WorldTesting implements Screen {
         if(Gdx.input.justTouched()) {
             Vector3 touch = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
             camera.unproject(touch);
-            Vector2 pt = HexMath.pixelToHex(hexWidth, hexHeight, touch.x, touch.y);
+            Vector2 pt = HexMath.pixelToHex(touch.x, touch.y);
             if(pt.y > borderHeight && pt.y < playHeight + borderHeight && pt.x > borderWidth && pt.x < playWidth + borderWidth) {
                 for(Terrain[] ta : terrain) {
                     for (Terrain t : ta) {
