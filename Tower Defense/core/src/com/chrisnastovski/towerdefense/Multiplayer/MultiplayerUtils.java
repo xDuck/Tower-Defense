@@ -1,4 +1,4 @@
-package com.chrisnastovski.towerdefense;
+package com.chrisnastovski.towerdefense.Multiplayer;
 
 /**
  * Created by Chris on 6/13/16.

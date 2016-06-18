@@ -1,6 +1,5 @@
-package com.chrisnastovski.towerdefense;
+package com.chrisnastovski.towerdefense.Units;
 
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -10,13 +9,13 @@ public class PathFollower {
     Vector2[] path;
     int curIndex = 0;
     int speed;
-    float x,y;
+    public float x,y;
 
     public PathFollower() {
 
     }
 
-    public PathFollower(Vector2[] path, int speed, Sprite sprite) {
+    public PathFollower(Vector2[] path, int speed) {
         this.path = path;
         this.x = path[0].x;
         this.y = path[0].y;

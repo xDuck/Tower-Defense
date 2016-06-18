@@ -1,10 +1,6 @@
-package com.chrisnastovski.towerdefense;
+package com.chrisnastovski.towerdefense.Multiplayer;
 
-import com.chrisnastovski.towerdefense.MultiplayerObjects.Lobby;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.clientHandshake;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.serverHandshake;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.serverInfo;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.stringMessage;
+import com.chrisnastovski.towerdefense.Units.PathFollower;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
@@ -25,9 +21,13 @@ public class MultiplayerClient {
     private final int TCP_PORT = 54777;
 
     Client client;
-    Lobby lobby;
+    MultiplayerObjects.Lobby lobby;
 
     Connection serverConn;
+
+    public int playerNumber = -1;
+    public int numPlayers = -1;
+    public ArrayList<PathFollower> followers = new ArrayList<PathFollower>();
 
     public MultiplayerClient() {
         // Create client
@@ -36,10 +36,10 @@ public class MultiplayerClient {
     }
 
     // Find lobbies on the network
-    public ArrayList<serverInfo> findLobbies() {
+    public ArrayList<MultiplayerObjects.serverInfo> findLobbies() {
 
         // Keep track of servers that are found
-        final ArrayList<serverInfo> servers = new ArrayList<serverInfo>();
+        final ArrayList<MultiplayerObjects.serverInfo> servers = new ArrayList<MultiplayerObjects.serverInfo>();
 
         // Get list of ip's on the network that are open on the ports
         List<InetAddress> inets;
@@ -70,8 +70,8 @@ public class MultiplayerClient {
             pingClient.addListener(new Listener() {
                 public void received (Connection connection, Object object) {
                     // Server sending basic info. Not using method for security reasons
-                    if (object instanceof serverInfo) {
-                        serverInfo info = new serverInfo();
+                    if (object instanceof MultiplayerObjects.serverInfo) {
+                        MultiplayerObjects.serverInfo info = new MultiplayerObjects.serverInfo();
                         System.out.println("[CLIENT] Found server: " + info.name + "(" + info.clientNames.length + ")");
                         servers.add(info);
                     }
@@ -79,7 +79,7 @@ public class MultiplayerClient {
             });
 
             // Send ping command
-            stringMessage cmd = new stringMessage();
+            MultiplayerObjects.stringMessage cmd = new MultiplayerObjects.stringMessage();
             cmd.message = "ping";
             pingClient.sendTCP(cmd);
 
@@ -89,14 +89,14 @@ public class MultiplayerClient {
 
     // Wrapper for joining localhost lobby
     public boolean joinOwnLobby(String name) {
-        Lobby lobby = new Lobby();
+        MultiplayerObjects.Lobby lobby = new MultiplayerObjects.Lobby();
         lobby.ip = "localhost";
         return joinLobby(lobby, name);
     }
 
 
     // Join any lobby
-    public boolean joinLobby(Lobby lobby, String name) {
+    public boolean joinLobby(MultiplayerObjects.Lobby lobby, String name) {
 
         // Store the lobby we are connecting to
         this.lobby = lobby;
@@ -122,7 +122,7 @@ public class MultiplayerClient {
         });
 
         // Send server client's info (response handled in listeners)
-        clientHandshake info = new clientHandshake();
+        MultiplayerObjects.clientHandshake info = new MultiplayerObjects.clientHandshake();
         info.name = name;
         client.sendTCP(info);
 
@@ -133,22 +133,25 @@ public class MultiplayerClient {
     private void clientHandleReceivedData(Connection connection, Object object) {
 
         if(object instanceof PathFollower) {
-            MainMenu.followers.add((PathFollower) object);
+            followers.add((PathFollower) object);
         }
-        if(object instanceof stringMessage) {
-            stringMessage msg = (stringMessage) object;
+        if(object instanceof MultiplayerObjects.stringMessage) {
+            MultiplayerObjects.stringMessage msg = (MultiplayerObjects.stringMessage) object;
             System.out.println("[CLIENT] Message received from "+msg.name+": " + msg.message);
         }
 
         // Server is sending us initial connection data
-        if(object instanceof serverHandshake) {
-            serverHandshake info = (serverHandshake) object;
+        if(object instanceof MultiplayerObjects.serverHandshake) {
+            MultiplayerObjects.serverHandshake info = (MultiplayerObjects.serverHandshake) object;
 
             // If we were rejected, call the disconnect event
             if(!info.accepted) {
                 onClientDisconnected();
                 return;
             }
+
+            playerNumber = info.playerNumber;
+            numPlayers = info.connections + 1;
 
             serverConn = connection;
             // Let user know who's here

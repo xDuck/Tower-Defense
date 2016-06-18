@@ -1,6 +1,7 @@
-package com.chrisnastovski.towerdefense;
+package com.chrisnastovski.towerdefense.Multiplayer;
 
 import com.badlogic.gdx.math.Vector2;
+import com.chrisnastovski.towerdefense.Units.PathFollower;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 
@@ -51,6 +52,7 @@ public class MultiplayerObjects {
         public boolean accepted;
         public int connections;
         public String[] Names;
+        public int playerNumber;
     }
 
     // Sent by server to allow client to discover

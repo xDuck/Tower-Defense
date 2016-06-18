@@ -1,10 +1,10 @@
-package com.chrisnastovski.towerdefense;
+package com.chrisnastovski.towerdefense.Multiplayer;
 
-import com.chrisnastovski.towerdefense.MultiplayerObjects.clientHandshake;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.clientInfo;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.serverHandshake;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.serverInfo;
-import com.chrisnastovski.towerdefense.MultiplayerObjects.stringMessage;
+import com.chrisnastovski.towerdefense.Multiplayer.MultiplayerObjects.clientHandshake;
+import com.chrisnastovski.towerdefense.Multiplayer.MultiplayerObjects.clientInfo;
+import com.chrisnastovski.towerdefense.Multiplayer.MultiplayerObjects.serverHandshake;
+import com.chrisnastovski.towerdefense.Multiplayer.MultiplayerObjects.serverInfo;
+import com.chrisnastovski.towerdefense.Multiplayer.MultiplayerObjects.stringMessage;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -83,7 +83,7 @@ public class MultiplayerServer {
     // Server specific handlers
     private void serverHandleReceivedData(Connection connection, Object object) {
 
-        if(object instanceof PathFollower) {
+        if(object instanceof com.chrisnastovski.towerdefense.Units.PathFollower) {
             broadcast(object);
         }
 
@@ -107,7 +107,7 @@ public class MultiplayerServer {
             clientHandshake info = (clientHandshake) object;
 
             // Server Full
-            if(serverInfo.clientNames.length + 1 >= serverInfo.maxClients) {
+            if(serverInfo.clientNames.length + 1 > serverInfo.maxClients) {
                 connection.close();
                 return;
             }
@@ -123,7 +123,10 @@ public class MultiplayerServer {
             handshake.accepted = true;
             handshake.connections = clients.size();
             handshake.Names = getClientNames();
+            handshake.playerNumber = getNewPlayerNumber();
             connection.sendTCP(handshake);
+
+            addName(info.name);
 
             // Broadcast message
             stringMessage newUser = new stringMessage();
@@ -142,6 +145,16 @@ public class MultiplayerServer {
         }
     }
 
+    public void addName(String n) {
+        String[] temp = serverInfo.clientNames;
+        serverInfo.clientNames = new String[temp.length+1];
+
+        for(int i = 0; i < temp.length; i++)
+            serverInfo.clientNames[i] = temp[i];
+
+        serverInfo.clientNames[temp.length] = n;
+    }
+
     public String[] getClientNames() {
         String[] names = new String[clients.size()];
         for(int i = 0; i < names.length; i++) {
@@ -149,6 +162,10 @@ public class MultiplayerServer {
         }
 
         return names;
+    }
+
+    public int getNewPlayerNumber() {
+        return serverInfo.clientNames.length;
     }
 
 }
