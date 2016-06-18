@@ -1,0 +1,33 @@
+vehicles.png
+size: 30, 136
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+carBlue
+  rotate: false
+  xy: 1, 105
+  size: 28, 30
+  orig: 28, 30
+  offset: 0, 0
+  index: -1
+carGreen
+  rotate: false
+  xy: 1, 37
+  size: 28, 32
+  orig: 28, 32
+  offset: 0, 0
+  index: -1
+carRed
+  rotate: false
+  xy: 1, 71
+  size: 28, 32
+  orig: 28, 32
+  offset: 0, 0
+  index: -1
+tank
+  rotate: true
+  xy: 1, 1
+  size: 34, 28
+  orig: 34, 28
+  offset: 0, 0
+  index: -1
