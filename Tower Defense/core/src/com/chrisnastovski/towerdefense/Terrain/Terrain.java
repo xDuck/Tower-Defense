@@ -10,12 +10,14 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class Terrain {
 
     public Sprite sprite;
+    public String tile;
 
     public boolean isSelected = false;
 
     public Building building;
 
-    public Terrain(Sprite sprite) {
+    public Terrain(Sprite sprite, String tile) {
+        this.tile = tile;
         this.sprite = sprite;
     }
 
@@ -43,11 +45,16 @@ public class Terrain {
     public void clearLand(Sprite s) {
         s.setBounds(sprite.getX(), sprite.getY(), sprite.getWidth(), sprite.getHeight());
         sprite = s;
+        tile = "grass05";
     }
 
     public void setSelected(boolean s) {
         if(building != null)
             building.isSelected = s;
         isSelected = s;
+    }
+
+    public String getTile() {
+        return tile;
     }
 }

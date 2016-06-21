@@ -12,9 +12,12 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.chrisnastovski.towerdefense.Terrain.Building;
 import com.chrisnastovski.towerdefense.Terrain.Terrain;
+import com.chrisnastovski.towerdefense.Units.PathFollower;
+import com.chrisnastovski.towerdefense.Units.Tank;
 import com.chrisnastovski.towerdefense.Utilities.GameClass;
-import com.chrisnastovski.towerdefense.Utilities.HexMath;
+import com.chrisnastovski.towerdefense.Utilities.SquareMath;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class WorldTesting implements Screen {
@@ -25,16 +28,17 @@ public class WorldTesting implements Screen {
     TextureAtlas objAtlas;
     TextureAtlas vehicleAtlas;
 
-    Terrain[][] terrain;
+    public Terrain[][] terrain;
+    ArrayList<PathFollower> vehicles = new ArrayList<PathFollower>();
     String[] textureNames = { "grass10", "grass11", "grass12", "grass13", "grass14", "grass15", "grass16"};
     String borderTile = "grass05";
 
 
-    int hexWidth = HexMath.hexWidth, hexHeight = HexMath.hexHeight;
-    int playWidth = 15, playHeight = 12;
-    int borderWidth = 1, borderHeight = 1;
-    int fullWidth = (playWidth+borderWidth*2)*hexWidth;
-    int fullHeight = (int) HexMath.hexToPixel(0, playHeight + borderHeight*2).y + hexHeight/4;
+    int size = SquareMath.size;
+    int playColumns = 15, playRows = 12;
+    public int borderColumns = 0, borderRows = 0;
+    int fullWidth = (playColumns + borderColumns *2)*size;
+    int fullHeight = (int) SquareMath.squareToPixel(0, playRows + borderRows *2).y + size/4;
 
     SpriteBatch batch;
     OrthographicCamera camera;
@@ -47,32 +51,31 @@ public class WorldTesting implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 700, 500);
 
-        camera.translate(borderWidth*hexWidth - hexWidth/2, fullHeight / 2 - camera.viewportHeight / 2);
+        camera.translate(borderColumns *size - size/2, fullHeight / 2 - camera.viewportHeight / 2);
 
         batch = new SpriteBatch();
 
-        bgAtlas = new TextureAtlas("sprites/background-tiles.txt");
+        bgAtlas = new TextureAtlas("sprites/background-square.txt");
         objAtlas = new TextureAtlas("sprites/buildings.txt");
         vehicleAtlas = new TextureAtlas("sprites/vehicles.txt");
 
-        terrain = new Terrain[borderHeight*2 + playHeight][borderWidth*2 + playWidth];
+        terrain = new Terrain[borderRows *2 + playRows][borderColumns *2 + playColumns];
 
         // Generate Map
-        for(int i = 0; i < playHeight + borderHeight*2; i++) {
-            for(int j = 0; j < playWidth + borderWidth*2; j++) {
+        for(int i = 0; i < playRows + borderRows *2; i++) {
+            for(int j = 0; j < playColumns + borderColumns *2; j++) {
 
                 String texture = textureNames[rand.nextInt(textureNames.length)];
-                if(i < borderHeight || i >= playHeight + borderHeight)
+                if(i < borderRows || i >= playRows + borderRows)
                     texture = borderTile;
 
-                if(j < borderWidth || j >= playWidth + borderWidth)
+                if(j < borderColumns || j >= playColumns + borderColumns)
                     texture = borderTile;
 
                 Sprite s = bgAtlas.createSprite(texture);
-                Vector2 pt = HexMath.hexToPixel(j, i);
-                System.out.println("Hex " + i + ", " + j + ": " + pt);
-                s.setBounds(pt.x, pt.y, hexWidth, hexHeight);
-                Terrain t = new Terrain(s);
+                Vector2 pt = SquareMath.squareToPixel(j, i);
+                s.setBounds(pt.x, pt.y, size, size);
+                Terrain t = new Terrain(s, texture);
                 terrain[i][j] = t;
 
             }
@@ -80,37 +83,45 @@ public class WorldTesting implements Screen {
 
         // Create Bases
         Sprite s = objAtlas.createSprite("campingTent");
-        int row = playHeight/2 + 1;
-        int col = borderWidth + 1;
+        int row = playRows /2 + 1;
+        int col = borderColumns + 1;
         Building b = new Building(s, terrain[row][col]);
         terrain[row][col].addBuilding(b);
         clearLand(row, col);
         clearAround(row, col);
 
         s = objAtlas.createSprite("campingTent");
-        col = playWidth + borderWidth - 2;
+        col = playColumns + borderColumns - 2;
         b = new Building(s, terrain[row][col]);
         terrain[row][col].addBuilding(b);
         clearLand(row, col);
         clearAround(row, col);
 
         // Place Vehicles
+        Vector2 path[] = {new Vector2(borderColumns + 1, row), new Vector2(col, row)};
+
+        Tank tank = new Tank(this, vehicleAtlas.createSprite("tank"), path, 1);
+        vehicles.add(tank);
 
     }
 
     public void clearLand(int row, int col) {
         terrain[row][col].clearLand(bgAtlas.createSprite("grass05"));
+
+        for(PathFollower f : vehicles)
+            f.updatePath();
     }
 
     public void clearAround(int row, int col) {
-        terrain[row-1][col].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row-1][col-1].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row][col-1].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row+1][col].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row+1][col+1].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row][col+1].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row-1][col+1].clearLand(bgAtlas.createSprite("grass05"));
-        terrain[row+1][col-1].clearLand(bgAtlas.createSprite("grass05"));
+        clearLand(row, col);
+        clearLand(row-1, col);
+        clearLand(row-1, col-1);
+        clearLand(row-1, col+1);
+        clearLand(row+1, col-1);
+        clearLand(row+1, col+1);
+        clearLand(row+1, col);
+        clearLand(row, col-1);
+        clearLand(row, col+1);
     }
 
     public void show() {
@@ -130,6 +141,8 @@ public class WorldTesting implements Screen {
         for(Terrain[] ta : terrain)
             for(Terrain t: ta)
                 t.update();
+        for(PathFollower f: vehicles)
+            f.update();
 
         batch.begin();
         for(Terrain[] ta : terrain) {
@@ -142,6 +155,8 @@ public class WorldTesting implements Screen {
                 t.drawBuilding(batch);
             }
         }
+        for(PathFollower f : vehicles)
+            f.sprite.draw(batch);
         batch.end();
     }
 
@@ -166,30 +181,31 @@ public class WorldTesting implements Screen {
 
 
 
-        if(camera.position.x < hexWidth/2 + camera.viewportWidth/2 )
-            camera.position.x = hexWidth/2 + camera.viewportWidth/2;
+        if(camera.position.x < camera.viewportWidth/2 )
+            camera.position.x = camera.viewportWidth/2;
 
         if(camera.position.x > fullWidth - camera.viewportWidth/2 )
             camera.position.x = fullWidth - camera.viewportWidth/2;
 
-        if(camera.position.y < hexHeight/2 + camera.viewportHeight/2 )
-            camera.position.y = hexHeight/2 + camera.viewportHeight/2;
+        if(camera.position.y < camera.viewportHeight/2 )
+            camera.position.y = camera.viewportHeight/2;
 
-        if(camera.position.y > fullHeight - hexHeight/2 - camera.viewportHeight/2 )
-            camera.position.y = fullHeight - hexHeight/2 - camera.viewportHeight/2;
+        if(camera.position.y > fullHeight - camera.viewportHeight/2 )
+            camera.position.y = fullHeight - camera.viewportHeight/2;
 
 
         if(Gdx.input.justTouched()) {
             Vector3 touch = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
             camera.unproject(touch);
-            Vector2 pt = HexMath.pixelToHex(touch.x, touch.y);
-            if(pt.y > borderHeight && pt.y < playHeight + borderHeight && pt.x > borderWidth && pt.x < playWidth + borderWidth) {
+            Vector2 pt = SquareMath.pixelToSquare(touch.x, touch.y);
+            if(pt.y > borderRows && pt.y < playRows + borderRows && pt.x > borderColumns && pt.x < playColumns + borderColumns) {
                 for(Terrain[] ta : terrain) {
                     for (Terrain t : ta) {
                         t.setSelected(false);
                     }
                 }
                 terrain[(int) pt.y][(int) pt.x].setSelected(true);
+                clearLand((int) pt.y, (int) pt.x);
             }
         }
 
